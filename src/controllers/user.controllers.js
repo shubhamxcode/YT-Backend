@@ -19,15 +19,18 @@ const registeruser=asynchandler(async(req,res)=>{
     if ([username,fullname,password,email].some((field)=>field?.trim()==="")) {
         throw new Apierror(400,"all field are required ")
     } 
-    const userexit=User.find({
+    const userexit= await User.findOne({
         $or:[{username},{email}]
     }) 
-
     if (userexit) {
         throw new Apierror(409,"useralready exit")
     }
     const avtarLocalPath=req.files?.avatar[0]?.path
-    const coverImageLocalpath=req.files?.coverImage[0]?.path
+    //const coverImageLocalpath=req.files?.coverImage[0]?.path
+    let coverImageLocalpath;
+    if (req.files && Array.isArray(req.files.coverImage)&&req.files.coverImage.length>0) {
+        coverImageLocalpath=req.files.coverImage[0].path
+    } 
     if (!avtarLocalPath) {
         throw new Apierror(400,"Avtar file is  required")
     }
@@ -45,6 +48,7 @@ const registeruser=asynchandler(async(req,res)=>{
         password 
     })
     const createduser=await User.findById(user._id).select("-password -refreshToken")
+    console.log(createduser);
 
     if (!createduser) {
         throw new Apierror(500,"something went wrong while registring a user")
